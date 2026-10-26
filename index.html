@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Update Progres Sponsor - Realtime Google Sheets</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex justify-center py-4 sm:py-8 px-3 sm:px-6">
+
+  <!-- Container Utama -->
+  <div class="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col">
+    
+    <!-- Header Elegan -->
+    <header class="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 text-white p-5 sm:p-6 relative">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-indigo-600/30 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shadow-inner">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight">Progres Sponsorship</h1>
+            <p class="text-xs text-indigo-200/70">Monitoring & Input Real-Time ke Google Sheets</p>
+          </div>
+        </div>
+
+        <!-- Tombol Refresh -->
+        <button 
+          type="button" 
+          onclick="loadData()" 
+          title="Segarkan Data"
+          class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-300 hover:text-white transition flex items-center gap-1.5 text-xs font-medium"
+        >
+          <svg id="refreshIcon" class="w-4 h-4 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span class="hidden sm:inline">Refresh</span>
+        </button>
+      </div>
+
+      <!-- Ringkasan Metrik (Stats Cards) -->
+      <div class="grid grid-cols-4 gap-2 pt-1 text-center">
+        <div class="bg-slate-900/80 border border-slate-700/60 rounded-2xl p-2.5 sm:p-3">
+          <div class="text-[10px] sm:text-xs text-slate-400 font-medium uppercase tracking-wider">Total</div>
+          <div id="statTotal" class="text-base sm:text-xl font-extrabold text-white mt-0.5">0</div>
+        </div>
+        <div class="bg-emerald-950/40 border border-emerald-800/40 rounded-2xl p-2.5 sm:p-3">
+          <div class="text-[10px] sm:text-xs text-emerald-400 font-medium uppercase tracking-wider">Deal ✅</div>
+          <div id="statDeal" class="text-base sm:text-xl font-extrabold text-emerald-300 mt-0.5">0</div>
+        </div>
+        <div class="bg-amber-950/40 border border-amber-800/40 rounded-2xl p-2.5 sm:p-3">
+          <div class="text-[10px] sm:text-xs text-amber-400 font-medium uppercase tracking-wider">Proses 💬</div>
+          <div id="statProses" class="text-base sm:text-xl font-extrabold text-amber-300 mt-0.5">0</div>
+        </div>
+        <div class="bg-rose-950/40 border border-rose-800/40 rounded-2xl p-2.5 sm:p-3">
+          <div class="text-[10px] sm:text-xs text-rose-400 font-medium uppercase tracking-wider">Ditolak ❌</div>
+          <div id="statDitolak" class="text-base sm:text-xl font-extrabold text-rose-300 mt-0.5">0</div>
+        </div>
+      </div>
+
+      <!-- Tab Switcher -->
+      <div class="grid grid-cols-2 p-1.5 mt-5 bg-slate-950/90 rounded-2xl border border-slate-800/90">
+        <button 
+          type="button" 
+          id="tabBtnInput" 
+          onclick="switchTab('input')"
+          class="py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Form Input
+        </button>
+        <button 
+          type="button" 
+          id="tabBtnList" 
+          onclick="switchTab('list')"
+          class="py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 text-slate-400 hover:text-white"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+          Daftar Sponsor (<span id="tabCount">0</span>)
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT: TAB 1 (FORM INPUT PROGRES SPONSOR) -->
+    <main id="tabInput" class="p-5 sm:p-7 flex-1">
+      <form id="sponsorForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
+        
+        <!-- Baris 1: Nama PJ & Tanggal Pengajuan -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 flex items-center justify-between">
+              <span>Nama PJ (Panitia) <span class="text-rose-500">*</span></span>
+            </label>
+            <input 
+              type="text" 
+              id="namaPJ" 
+              list="datalistPJ" 
+              required
+              placeholder="Contoh: Sarah / Budi" 
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-medium text-slate-800 text-sm transition"
+            >
+            <datalist id="datalistPJ"></datalist>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+              Tanggal Pengajuan <span class="text-rose-500">*</span>
+            </label>
+            <input 
+              type="date" 
+              id="tanggalPengajuan" 
+              required
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-medium text-slate-800 text-sm transition"
+            >
+          </div>
+        </div>
+
+        <!-- Baris 2: Nama Perusahaan -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Nama Perusahaan / Brand <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              id="namaPerusahaan" 
+              required
+              placeholder="Contoh: PT Telkom Indonesia / Paragon Corp" 
+              class="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-semibold text-slate-800 text-sm transition"
+            >
+          </div>
+        </div>
+
+        <!-- Baris 3: Narahubung -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Narahubung (CP Perusahaan) <span class="text-rose-500">*</span>
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              id="narahubung" 
+              required
+              placeholder="Contoh: Ibu Rina (HR/CSR) - 0812-3456-7890 / rina@pt.com" 
+              class="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-medium text-slate-800 text-sm transition"
+            >
+          </div>
+        </div>
+
+        <!-- Baris 4: Via Apa Menghubunginya -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Via Apa Menghubunginya <span class="text-rose-500">*</span>
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="via-option cursor-pointer">
+              <input type="radio" name="viaRadio" value="WhatsApp" checked class="peer sr-only" onchange="syncVia('WhatsApp')">
+              <div class="p-2 border border-slate-200 peer-checked:border-emerald-500 peer-checked:bg-emerald-50 peer-checked:text-emerald-800 rounded-xl text-center text-xs font-semibold text-slate-600 transition flex items-center justify-center gap-1.5 hover:bg-slate-50">
+                <span>💬</span> WhatsApp
+              </div>
+            </label>
+            <label class="via-option cursor-pointer">
+              <input type="radio" name="viaRadio" value="Email" class="peer sr-only" onchange="syncVia('Email')">
+              <div class="p-2 border border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 peer-checked:text-blue-800 rounded-xl text-center text-xs font-semibold text-slate-600 transition flex items-center justify-center gap-1.5 hover:bg-slate-50">
+                <span>✉️</span> Email
+              </div>
+            </label>
+            <label class="via-option cursor-pointer">
+              <input type="radio" name="viaRadio" value="Telepon" class="peer sr-only" onchange="syncVia('Telepon')">
+              <div class="p-2 border border-slate-200 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-800 rounded-xl text-center text-xs font-semibold text-slate-600 transition flex items-center justify-center gap-1.5 hover:bg-slate-50">
+                <span>📞</span> Telepon
+              </div>
+            </label>
+            <label class="via-option cursor-pointer">
+              <input type="radio" name="viaRadio" value="Ketemu Langsung" class="peer sr-only" onchange="syncVia('Ketemu Langsung')">
+              <div class="p-2 border border-slate-200 peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-800 rounded-xl text-center text-xs font-semibold text-slate-600 transition flex items-center justify-center gap-1.5 hover:bg-slate-50">
+                <span>🤝</span> Visit / Offline
+              </div>
+            </label>
+            <label class="via-option cursor-pointer">
+              <input type="radio" name="viaRadio" value="Instagram" class="peer sr-only" onchange="syncVia('Instagram')">
+              <div class="p-2 border border-slate-200 peer-checked:border-pink-500 peer-checked:bg-pink-50 peer-checked:text-pink-800 rounded-xl text-center text-xs font-semibold text-slate-600 transition flex items-center justify-center gap-1.5 hover:bg-slate-50">
+                <span>📸</span> Instagram
+              </div>
+            </label>
+            <label class="via-option cursor-pointer">
+              <input type="radio" name="viaRadio" value="Lainnya" class="peer sr-only" onchange="syncVia('Lainnya')">
+              <div class="p-2 border border-slate-200 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-checked:text-amber-800 rounded-xl text-center text-xs font-semibold text-slate-600 transition flex items-center justify-center gap-1.5 hover:bg-slate-50">
+                <span>🌐</span> Lainnya
+              </div>
+            </label>
+          </div>
+          <!-- Input via kustom jika memilih Lainnya -->
+          <input 
+            type="text" 
+            id="viaCustom" 
+            placeholder="Sebutkan via apa (LinkedIn, Form Website, Proposal Titip, dll)..." 
+            class="hidden mt-2 w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-xs text-slate-700"
+          >
+        </div>
+
+        <!-- Baris 5: Benefit yang Ditawarkan -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Benefit yang Ditawarkan <span class="text-rose-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="benefit" 
+            required
+            placeholder="Contoh: Paket Platinum (Rp 10 Juta) / Booth 3x3 / Logo Kaos" 
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-medium text-slate-800 text-sm transition"
+          >
+          <!-- Tombol Cepat Pilihan Benefit -->
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            <button type="button" onclick="setBenefitQuick('Paket Platinum')" class="px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg transition border border-slate-200">+ Platinum</button>
+            <button type="button" onclick="setBenefitQuick('Paket Gold')" class="px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg transition border border-slate-200">+ Gold</button>
+            <button type="button" onclick="setBenefitQuick('Paket Silver')" class="px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg transition border border-slate-200">+ Silver</button>
+            <button type="button" onclick="setBenefitQuick('Sponsor Utama')" class="px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg transition border border-slate-200">+ Sponsor Utama</button>
+            <button type="button" onclick="setBenefitQuick('Media Partner')" class="px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg transition border border-slate-200">+ Medpart</button>
+            <button type="button" onclick="setBenefitQuick('Stand / Booth Acara')" class="px-2.5 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg transition border border-slate-200">+ Booth</button>
+          </div>
+        </div>
+
+        <!-- Baris 6: Status & Keterangan Progress -->
+        <div class="pt-2 border-t border-slate-100">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Status Progress Saat Ini <span class="text-rose-500">*</span>
+          </label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+            <label class="cursor-pointer">
+              <input type="radio" name="statusProgress" value="Menunggu Respon" checked class="peer sr-only">
+              <div class="py-2 px-1 text-center border border-slate-200 peer-checked:border-slate-800 peer-checked:bg-slate-900 peer-checked:text-white rounded-xl text-xs font-semibold text-slate-600 transition">
+                🕒 Menunggu
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="statusProgress" value="Follow Up" class="peer sr-only">
+              <div class="py-2 px-1 text-center border border-slate-200 peer-checked:border-indigo-600 peer-checked:bg-indigo-600 peer-checked:text-white rounded-xl text-xs font-semibold text-slate-600 transition">
+                💬 Follow Up
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="statusProgress" value="Negosiasi" class="peer sr-only">
+              <div class="py-2 px-1 text-center border border-slate-200 peer-checked:border-amber-600 peer-checked:bg-amber-600 peer-checked:text-white rounded-xl text-xs font-semibold text-slate-600 transition">
+                🤝 Negosiasi
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="statusProgress" value="Deal / Disetujui" class="peer sr-only">
+              <div class="py-2 px-1 text-center border border-slate-200 peer-checked:border-emerald-600 peer-checked:bg-emerald-600 peer-checked:text-white rounded-xl text-xs font-semibold text-slate-600 transition">
+                ✅ DEAL!
+              </div>
+            </label>
+          </div>
+
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+            Keterangan Progress <span class="text-rose-500">*</span>
+          </label>
+          <textarea 
+            id="keteranganProgress" 
+            rows="3" 
+            required
+            placeholder="Tulis perkembangan terkini... (Contoh: Proposal sudah dikirim via email, CP minta di-follow up hari Kamis sore untuk konfirmasi ketersediaan budget)"
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 font-medium text-slate-800 text-sm transition"
+          ></textarea>
+        </div>
+
+        <!-- Tombol Aksi Form -->
+        <div class="pt-2 flex items-center gap-3">
+          <button 
+            type="submit" 
+            id="btnSubmit" 
+            class="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+          >
+            <svg id="submitSpinner" class="hidden w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span id="submitLabel">💾 Simpan Progres Sponsor</span>
+          </button>
+
+          <button 
+            type="button" 
+            onclick="resetForm()" 
+            class="py-3 px-4 bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-600 font-semibold rounded-2xl transition text-sm"
+            title="Bersihkan Isian Form"
+          >
+            Reset
+          </button>
+        </div>
+      </form>
+    </main>
+
+    <!-- CONTENT: TAB 2 (DAFTAR & UPDATE CEPAT PROGRES) -->
+    <main id="tabList" class="hidden p-4 sm:p-6 flex-1 flex flex-col space-y-3.5">
+      
+      <!-- Filter Bar -->
+      <div class="flex flex-col sm:flex-row gap-2">
+        <div class="relative flex-1">
+          <input 
+            type="text" 
+            id="searchInput" 
+            oninput="renderFilteredList()" 
+            placeholder="Cari perusahaan / PJ / benefit..."
+            class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          >
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+
+        <select 
+          id="filterStatus" 
+          onchange="renderFilteredList()" 
+          class="px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm text-slate-700 focus:bg-white focus:outline-none"
+        >
+          <option value="ALL">Semua Status</option>
+          <option value="Deal">✅ Deal</option>
+          <option value="Proses">💬 Proses / Nego</option>
+          <option value="Menunggu">🕒 Menunggu</option>
+          <option value="Ditolak">❌ Ditolak</option>
+        </select>
+      </div>
+
+      <!-- Container List Sponsor -->
+      <div id="sponsorListContainer" class="space-y-3 overflow-y-auto max-h-[500px] pr-1">
+        <div class="text-center py-10 text-slate-400 text-xs">Memuat data sponsor...</div>
+      </div>
+    </main>
+
+    <!-- Footer Mini -->
+    <footer class="bg-slate-50 px-5 py-3 border-t border-slate-200/80 text-center text-[11px] text-slate-500 flex items-center justify-between">
+      <span>Auto-Sync Realtime</span>
+      <span class="font-semibold text-slate-700">Web Form Sponsorship v1.0</span>
+    </footer>
+
+  </div>
+
+  <!-- MODAL QUICK UPDATE STATUS -->
+  <div id="updateModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-base font-bold text-slate-800" id="modalPerusahaanNama">Update Progres</h3>
+          <p class="text-xs text-slate-500" id="modalPJNama">PJ: -</p>
+        </div>
+        <button onclick="closeUpdateModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">✕</button>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Ubah Status</label>
+        <select id="modalStatusBaru" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800">
+          <option value="Menunggu Respon">🕒 Menunggu Respon</option>
+          <option value="Follow Up 1">💬 Follow Up 1</option>
+          <option value="Follow Up 2">💬 Follow Up 2</option>
+          <option value="Sedang Negosiasi">🤝 Sedang Negosiasi</option>
+          <option value="Deal / Disetujui">✅ Deal / Disetujui</option>
+          <option value="Ditolak / Batal">❌ Ditolak / Batal</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Tambah Catatan Progres Baru</label>
+        <textarea id="modalCatatanBaru" rows="3" placeholder="Contoh: Sudah konfirmasi via WA, PIC menyetujui paket Gold..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-800"></textarea>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="submitUpdateModal()" id="btnModalSubmit" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition">
+          Simpan Pembaruan
+        </button>
+        <button onclick="closeUpdateModal()" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition">
+          Batal
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFIKASI -->
+  <div id="toast" class="fixed bottom-5 right-5 left-5 sm:left-auto sm:max-w-sm bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs sm:text-sm font-medium transition-all duration-300 translate-y-24 opacity-0 pointer-events-none z-50">
+    <div id="toastIcon" class="w-5 h-5 flex-shrink-0"></div>
+    <div id="toastMessage" class="flex-1">Pesan</div>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // URL Google Apps Script yang sudah Anda deploy
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPdy7R39QWJsV_DLea_Ga4V4YoBZCdQUKheVodj-S6bvRiH9Ni1hWHgPbH02YLoRHd/exec';
+
+    // State Aplikasi
+    let currentData = {
+      summary: { total: 0, deal: 0, negosiasi: 0, menunggu: 0, ditolak: 0 },
+      daftarPJ: [],
+      listSponsor: []
+    };
+    let activeEditingRow = null;
+
+    // Deteksi apakah berjalan langsung di dalam Google Apps Script
+    const isGAS = typeof google !== 'undefined' && google.script && google.script.run;
+
+    // Inisialisasi saat halaman dibuka
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set default tanggal hari ini
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('tanggalPengajuan').value = today;
+
+      loadData();
+    });
+
+    // Pindah Tab
+    function switchTab(tab) {
+      const tabInput = document.getElementById('tabInput');
+      const tabList = document.getElementById('tabList');
+      const tabBtnInput = document.getElementById('tabBtnInput');
+      const tabBtnList = document.getElementById('tabBtnList');
+
+      if (tab === 'input') {
+        tabInput.classList.remove('hidden');
+        tabList.classList.add('hidden');
+        tabBtnInput.className = "py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/30";
+        tabBtnList.className = "py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 text-slate-400 hover:text-white";
+      } else {
+        tabInput.classList.add('hidden');
+        tabList.classList.remove('hidden');
+        tabBtnList.className = "py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-600/30";
+        tabBtnInput.className = "py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 text-slate-400 hover:text-white";
+        renderFilteredList();
+      }
+    }
+
+    // Sinkronisasi radio via
+    function syncVia(val) {
+      const viaCustom = document.getElementById('viaCustom');
+      if (val === 'Lainnya') {
+        viaCustom.classList.remove('hidden');
+        viaCustom.focus();
+      } else {
+        viaCustom.classList.add('hidden');
+        viaCustom.value = '';
+      }
+    }
+
+    // Tombol cepat benefit
+    function setBenefitQuick(val) {
+      const input = document.getElementById('benefit');
+      if (!input.value) {
+        input.value = val;
+      } else {
+        input.value += `, ${val}`;
+      }
+    }
+
+    // Load Data dari Google Sheets (via GAS atau via fetch API Vercel)
+    function loadData() {
+      const refreshIcon = document.getElementById('refreshIcon');
+      refreshIcon.classList.add('rotate-180');
+
+      if (isGAS) {
+        google.script.run
+          .withSuccessHandler(onDataLoaded)
+          .withFailureHandler(onError)
+          .getDashboardData();
+      } else if (SCRIPT_URL && SCRIPT_URL.startsWith('http')) {
+        fetch(`${SCRIPT_URL}?action=getData`)
+          .then(res => res.json())
+          .then(data => onDataLoaded(data))
+          .catch(err => {
+            console.warn('Koneksi online gagal, gunakan fallback demo:', err);
+            loadDemoData();
+          });
+      } else {
+        loadDemoData();
+      }
+    }
+
+    function loadDemoData() {
+      const localStored = localStorage.getItem('demo_sponsor_data');
+      if (localStored) {
+        currentData = JSON.parse(localStored);
+      } else {
+        currentData = {
+          summary: { total: 3, deal: 1, negosiasi: 1, menunggu: 1, ditolak: 0 },
+          daftarPJ: ['Budi Santoso', 'Sarah Maulida'],
+          listSponsor: [
+            {
+              rowNumber: 2,
+              timestamp: '2026-10-26 14:10:00',
+              tanggalPengajuan: '2026-10-26',
+              namaPJ: 'Sarah Maulida',
+              namaPerusahaan: 'PT Paragon Technology',
+              narahubung: 'Ibu Dian (CSR) - 0812-8899-7766',
+              via: 'WhatsApp',
+              benefit: 'Paket Platinum',
+              status: 'Deal / Disetujui',
+              keterangan: 'Sudah disetujui, tinggal kirim invoice MoU hari Senin.'
+            },
+            {
+              rowNumber: 3,
+              timestamp: '2026-10-26 11:20:00',
+              tanggalPengajuan: '2026-10-25',
+              namaPJ: 'Budi Santoso',
+              namaPerusahaan: 'Bank Central Asia (BCA)',
+              narahubung: 'Bpk. Hendra - hendra@bca.co.id',
+              via: 'Email',
+              benefit: 'Booth Acara & Sponsor Utama',
+              status: 'Negosiasi',
+              keterangan: 'Proposal sudah dipelajari, minta penyesuaian ukuran booth.'
+            },
+            {
+              rowNumber: 4,
+              timestamp: '2026-10-25 09:15:00',
+              tanggalPengajuan: '2026-10-25',
+              namaPJ: 'Sarah Maulida',
+              namaPerusahaan: 'Indofood Sukses Makmur',
+              narahubung: 'Bagian Partnership - 0813-1122-3344',
+              via: 'Telepon',
+              benefit: 'Goodie Bag & Produk Konsumsi',
+              status: 'Menunggu Respon',
+              keterangan: 'Sudah dihubungi, proposal dikirim ke email corporate sekretariat.'
+            }
+          ]
+        };
+      }
+      onDataLoaded(currentData);
+    }
+
+    function onDataLoaded(data) {
+      const refreshIcon = document.getElementById('refreshIcon');
+      refreshIcon.classList.remove('rotate-180');
+
+      if (!data || (!data.success && data.summary === undefined)) {
+        showToast('Gagal memuat data!', 'error');
+        return;
+      }
+
+      currentData = data;
+      updateStatsUI(data.summary);
+      updateDatalistPJ(data.daftarPJ || []);
+      document.getElementById('tabCount').innerText = (data.listSponsor || []).length;
+      renderFilteredList();
+    }
+
+    function updateStatsUI(summary) {
+      if (!summary) return;
+      document.getElementById('statTotal').innerText = summary.total || 0;
+      document.getElementById('statDeal').innerText = summary.deal || 0;
+      document.getElementById('statProses').innerText = summary.negosiasi || 0;
+      document.getElementById('statDitolak').innerText = summary.ditolak || 0;
+    }
+
+    function updateDatalistPJ(daftarPJ) {
+      const datalist = document.getElementById('datalistPJ');
+      datalist.innerHTML = '';
+      daftarPJ.forEach(pj => {
+        const opt = document.createElement('option');
+        opt.value = pj;
+        datalist.appendChild(opt);
+      });
+    }
+
+    // Handle Submit Form Input Progres
+    function handleFormSubmit(e) {
+      e.preventDefault();
+
+      const btnSubmit = document.getElementById('btnSubmit');
+      const submitSpinner = document.getElementById('submitSpinner');
+      const submitLabel = document.getElementById('submitLabel');
+
+      btnSubmit.disabled = true;
+      submitSpinner.classList.remove('hidden');
+      submitLabel.innerText = 'Menyimpan ke Sheets...';
+
+      // Ambil nilai via
+      const viaChecked = document.querySelector('input[name="viaRadio"]:checked').value;
+      const viaFinal = (viaChecked === 'Lainnya') 
+        ? (document.getElementById('viaCustom').value.trim() || 'Lainnya') 
+        : viaChecked;
+
+      const formData = {
+        namaPJ: document.getElementById('namaPJ').value.trim(),
+        tanggalPengajuan: document.getElementById('tanggalPengajuan').value,
+        namaPerusahaan: document.getElementById('namaPerusahaan').value.trim(),
+        narahubung: document.getElementById('narahubung').value.trim(),
+        via: viaFinal,
+        benefit: document.getElementById('benefit').value.trim(),
+        statusProgress: document.querySelector('input[name="statusProgress"]:checked').value,
+        keteranganProgress: document.getElementById('keteranganProgress').value.trim()
+      };
+
+      if (isGAS) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            btnSubmit.disabled = false;
+            submitSpinner.classList.add('hidden');
+            submitLabel.innerText = '💾 Simpan Progres Sponsor';
+
+            if (res.success) {
+              showToast(res.message || 'Berhasil disimpan!', 'success');
+              resetFormPreservePJ();
+              if (res.dashboard) onDataLoaded(res.dashboard);
+              else loadData();
+            } else {
+              showToast(res.message || 'Gagal menyimpan', 'error');
+            }
+          })
+          .withFailureHandler((err) => {
+            btnSubmit.disabled = false;
+            submitSpinner.classList.add('hidden');
+            submitLabel.innerText = '💾 Simpan Progres Sponsor';
+            onError(err);
+          })
+          .simpanDataProgres(formData);
+      } else if (SCRIPT_URL && SCRIPT_URL.startsWith('http')) {
+        // Kirim via fetch ke Google Apps Script dari Vercel
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(formData)
+        })
+        .then(res => res.json())
+        .then(res => {
+          btnSubmit.disabled = false;
+          submitSpinner.classList.add('hidden');
+          submitLabel.innerText = '💾 Simpan Progres Sponsor';
+
+          if (res.success) {
+            showToast(res.message || 'Berhasil disimpan ke Google Sheets!', 'success');
+            resetFormPreservePJ();
+            if (res.dashboard) onDataLoaded(res.dashboard);
+            else loadData();
+          } else {
+            showToast(res.message || 'Gagal menyimpan', 'error');
+          }
+        })
+        .catch(err => {
+          btnSubmit.disabled = false;
+          submitSpinner.classList.add('hidden');
+          submitLabel.innerText = '💾 Simpan Progres Sponsor';
+          onError(err);
+        });
+      } else {
+        // Fallback Demo offline
+        setTimeout(() => {
+          btnSubmit.disabled = false;
+          submitSpinner.classList.add('hidden');
+          submitLabel.innerText = '💾 Simpan Progres Sponsor';
+
+          const newEntry = {
+            rowNumber: (currentData.listSponsor.length + 2),
+            timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            ...formData,
+            status: formData.statusProgress,
+            keterangan: formData.keteranganProgress
+          };
+
+          currentData.listSponsor.unshift(newEntry);
+          currentData.summary.total++;
+          if (formData.statusProgress.toLowerCase().includes('deal')) currentData.summary.deal++;
+          else if (formData.statusProgress.toLowerCase().includes('nego') || formData.statusProgress.toLowerCase().includes('follow')) currentData.summary.negosiasi++;
+          else currentData.summary.menunggu++;
+
+          if (!currentData.daftarPJ.includes(formData.namaPJ)) {
+            currentData.daftarPJ.push(formData.namaPJ);
+          }
+
+          localStorage.setItem('demo_sponsor_data', JSON.stringify(currentData));
+          onDataLoaded(currentData);
+          showToast('Progres berhasil disimpan! (Mode Demo)', 'success');
+          resetFormPreservePJ();
+        }, 600);
+      }
+    }
+
+          const newEntry = {
+            rowNumber: (currentData.listSponsor.length + 2),
+            timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+            ...formData,
+            status: formData.statusProgress,
+            keterangan: formData.keteranganProgress
+          };
+
+          currentData.listSponsor.unshift(newEntry);
+          currentData.summary.total++;
+          if (formData.statusProgress.toLowerCase().includes('deal')) currentData.summary.deal++;
+          else if (formData.statusProgress.toLowerCase().includes('nego') || formData.statusProgress.toLowerCase().includes('follow')) currentData.summary.negosiasi++;
+          else currentData.summary.menunggu++;
+
+          if (!currentData.daftarPJ.includes(formData.namaPJ)) {
+            currentData.daftarPJ.push(formData.namaPJ);
+          }
+
+          localStorage.setItem('demo_sponsor_data', JSON.stringify(currentData));
+          onDataLoaded(currentData);
+          showToast('Progres berhasil disimpan! (Mode Demo)', 'success');
+          resetFormPreservePJ();
+        }, 600);
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('sponsorForm').reset();
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('tanggalPengajuan').value = today;
+      syncVia('WhatsApp');
+    }
+
+    function resetFormPreservePJ() {
+      const currentPJ = document.getElementById('namaPJ').value;
+      resetForm();
+      if (currentPJ) document.getElementById('namaPJ').value = currentPJ;
+    }
+
+    // Render List Sponsor dengan Filter
+    function renderFilteredList() {
+      const container = document.getElementById('sponsorListContainer');
+      const search = (document.getElementById('searchInput').value || '').toLowerCase();
+      const filterStatus = document.getElementById('filterStatus').value;
+
+      const list = (currentData.listSponsor || []).filter(item => {
+        const matchSearch = 
+          item.namaPerusahaan.toLowerCase().includes(search) ||
+          item.namaPJ.toLowerCase().includes(search) ||
+          item.narahubung.toLowerCase().includes(search) ||
+          item.benefit.toLowerCase().includes(search) ||
+          item.keterangan.toLowerCase().includes(search);
+
+        let matchStatus = true;
+        const s = (item.status || '').toLowerCase();
+        if (filterStatus === 'Deal') {
+          matchStatus = s.includes('deal') || s.includes('diterima');
+        } else if (filterStatus === 'Proses') {
+          matchStatus = s.includes('nego') || s.includes('follow') || s.includes('diskusi');
+        } else if (filterStatus === 'Menunggu') {
+          matchStatus = s.includes('menunggu') || s.includes('pending');
+        } else if (filterStatus === 'Ditolak') {
+          matchStatus = s.includes('tolak') || s.includes('batal');
+        }
+
+        return matchSearch && matchStatus;
+      });
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto mb-2">
+              🔍
+            </div>
+            <p class="text-xs font-semibold text-slate-600">Tidak ada data sponsor yang cocok</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Coba ubah kata kunci pencarian atau filter status</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        // Status Badge Style
+        const s = (item.status || '').toLowerCase();
+        let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+        if (s.includes('deal') || s.includes('diterima')) {
+          badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-300';
+        } else if (s.includes('nego') || s.includes('follow')) {
+          badgeColor = 'bg-amber-50 text-amber-700 border-amber-300';
+        } else if (s.includes('tolak') || s.includes('batal')) {
+          badgeColor = 'bg-rose-50 text-rose-700 border-rose-300';
+        }
+
+        return `
+          <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm hover:border-indigo-300 transition-all space-y-2.5">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <h4 class="font-bold text-slate-900 text-sm leading-snug">${escapeHtml(item.namaPerusahaan)}</h4>
+                <div class="flex flex-wrap items-center gap-1.5 mt-1 text-[11px] text-slate-500 font-medium">
+                  <span class="bg-slate-100 px-2 py-0.5 rounded-md text-slate-700">PJ: ${escapeHtml(item.namaPJ)}</span>
+                  <span>•</span>
+                  <span>📅 ${item.tanggalPengajuan || '-'}</span>
+                  <span>•</span>
+                  <span>Via: ${escapeHtml(item.via)}</span>
+                </div>
+              </div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-xl border ${badgeColor} whitespace-nowrap">
+                ${escapeHtml(item.status)}
+              </span>
+            </div>
+
+            <!-- Narahubung & Benefit -->
+            <div class="text-xs text-slate-600 bg-slate-50/80 p-2.5 rounded-xl space-y-1 border border-slate-100">
+              <div class="flex items-start gap-1.5">
+                <span class="font-semibold text-slate-700 min-w-[75px]">Narahubung:</span>
+                <span class="text-slate-600">${escapeHtml(item.narahubung)}</span>
+              </div>
+              <div class="flex items-start gap-1.5">
+                <span class="font-semibold text-slate-700 min-w-[75px]">Benefit:</span>
+                <span class="text-indigo-600 font-semibold">${escapeHtml(item.benefit)}</span>
+              </div>
+            </div>
+
+            <!-- Keterangan Progres -->
+            <div class="text-xs text-slate-700 bg-amber-50/40 p-2.5 rounded-xl border border-amber-100/80 whitespace-pre-line leading-relaxed">
+              <span class="font-bold text-amber-900 block text-[10px] uppercase tracking-wider mb-0.5">Catatan Progres:</span>
+              ${escapeHtml(item.keterangan || '-')}
+            </div>
+
+            <!-- Tombol Aksi Cepat Update -->
+            <div class="flex items-center justify-end pt-1">
+              <button 
+                onclick="openUpdateModal(${item.rowNumber}, '${escapeQuotes(item.namaPerusahaan)}', '${escapeQuotes(item.namaPJ)}', '${escapeQuotes(item.status)}')" 
+                class="px-3 py-1.5 text-xs font-bold text-indigo-600 hover:text-white hover:bg-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl transition flex items-center gap-1 active:scale-95"
+              >
+                ⚡ Update Progres
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Modal Update Cepat
+    function openUpdateModal(rowNumber, perusahaan, pj, currentStatus) {
+      activeEditingRow = rowNumber;
+      document.getElementById('modalPerusahaanNama').innerText = perusahaan;
+      document.getElementById('modalPJNama').innerText = 'PJ: ' + pj;
+      document.getElementById('modalStatusBaru').value = currentStatus || 'Menunggu Respon';
+      document.getElementById('modalCatatanBaru').value = '';
+      document.getElementById('updateModal').classList.remove('hidden');
+    }
+
+    function closeUpdateModal() {
+      document.getElementById('updateModal').classList.add('hidden');
+      activeEditingRow = null;
+    }
+
+    function submitUpdateModal() {
+      if (!activeEditingRow) return;
+
+      const btn = document.getElementById('btnModalSubmit');
+      btn.disabled = true;
+      btn.innerText = 'Menyimpan...';
+
+      const statusBaru = document.getElementById('modalStatusBaru').value;
+      const catatanBaru = document.getElementById('modalCatatanBaru').value.trim();
+
+      if (isGAS) {
+        google.script.run
+          .withSuccessHandler((res) => {
+            btn.disabled = false;
+            btn.innerText = 'Simpan Pembaruan';
+            closeUpdateModal();
+            if (res.success) {
+              showToast(res.message, 'success');
+              if (res.dashboard) onDataLoaded(res.dashboard);
+              else loadData();
+            } else {
+              showToast(res.message, 'error');
+            }
+          })
+          .withFailureHandler((err) => {
+            btn.disabled = false;
+            btn.innerText = 'Simpan Pembaruan';
+            onError(err);
+          })
+          .updateStatusSponsor(activeEditingRow, statusBaru, catatanBaru);
+      } else if (SCRIPT_URL && SCRIPT_URL.startsWith('http')) {
+        // Update via fetch ke Google Apps Script dari Vercel
+        fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'updateStatus',
+            rowNumber: activeEditingRow,
+            statusBaru: statusBaru,
+            keteranganBaru: catatanBaru
+          })
+        })
+        .then(res => res.json())
+        .then(res => {
+          btn.disabled = false;
+          btn.innerText = 'Simpan Pembaruan';
+          closeUpdateModal();
+          if (res.success) {
+            showToast(res.message, 'success');
+            if (res.dashboard) onDataLoaded(res.dashboard);
+            else loadData();
+          } else {
+            showToast(res.message, 'error');
+          }
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.innerText = 'Simpan Pembaruan';
+          onError(err);
+        });
+      } else {
+        // Mock save demo
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.innerText = 'Simpan Pembaruan';
+          closeUpdateModal();
+
+          const target = currentData.listSponsor.find(x => x.rowNumber === activeEditingRow);
+          if (target) {
+            target.status = statusBaru;
+            if (catatanBaru) {
+              target.keterangan += `\n[Baru] ${catatanBaru}`;
+            }
+          }
+          localStorage.setItem('demo_sponsor_data', JSON.stringify(currentData));
+          onDataLoaded(currentData);
+          showToast('Status berhasil diupdate! (Mode Demo)', 'success');
+        }, 500);
+      }
+    }
+
+    // Toast Notifikasi
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const toastIcon = document.getElementById('toastIcon');
+      const toastMessage = document.getElementById('toastMessage');
+
+      toastMessage.innerText = message;
+      if (type === 'success') {
+        toastIcon.innerHTML = `<svg class="text-emerald-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+      } else {
+        toastIcon.innerHTML = `<svg class="text-rose-400 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
+      }
+
+      toast.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+      }, 3500);
+    }
+
+    function onError(err) {
+      showToast(err.message || 'Terjadi kesalahan sistem!', 'error');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeQuotes(str) {
+      if (!str) return '';
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
